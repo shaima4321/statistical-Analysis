@@ -1,0 +1,488 @@
+---
+title: Statistical Analysis of Visitor and Service Data across Saudi Customs Regions
+
+author: "Group 6"
+date: "2025-11-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This report presents a statistical analytical study based on a dataset obtained from multiple customs branches across different regions of Saudi Arabia.
+The dataset contains records of the number of services and number of visitors for each branch, classified by region (North, South, East, and West) and by quarterly periods (Q1–Q4) of the year 2024.
+
+The purpose of this study is not only to describe the data but to analyze and evaluate whether there are statistically significant differences in operational performance across regions.
+To achieve this, a Randomized Complete Block Design (RCBD) is applied, where Region is considered the treatment factor and Quarter is treated as the blocking factor to control for time-based variation.
+
+Using ANOVA, supported by assumption checks such as Levene’s test for homogeneity of variance, the study aims to determine whether observed differences in service and visitor activity are meaningful or due to random variation.
+
+
+
+
+\vspace{1cm}
+
+
+# Objectives
+
+The main analytical objectives of this study are:
+
+ 1. To compare the number of services and visitors across Saudi customs regions using an RCBD-based ANOVA model.
+ 
+ 2. To determine whether region has a statistically significant effect on service utilization and visitor activity.
+ 
+ 3. To evaluate whether quarterly changes (Q1–Q4) contribute to variation in activity levels after controlling for time.
+ 
+ 4. To identify which region demonstrates the highest operational performance based on the analytical results.
+
+
+
+
+
+\vspace{1cm}
+
+
+
+
+## Data Overview
+
+The dataset includes records from multiple customs branches in Saudi Arabia for 2024, showing the number of services and visitors by region and quarter.  
+It contains 49 observations and 7 variables, allowing comparison of regional performance and service activity trends over time.  
+
+
+
+
+
+```{r , message=FALSE, warning=FALSE,echo=FALSE}
+
+library(readxl)
+
+data <- read_excel("StaticData.xlsx")
+
+
+head(data)
+
+```
+
+
+
+
+\vspace{1cm}
+# **1. Descriptive Statistics**
+This section provides a summary of the customs service and visitor data collected from multiple customs branches across Saudi Arabia for the year 2024.  
+The dataset includes the number of services and number of visitors for each branch, classified by region (North, South, East, and West) and divided into quarterly periods (Q1–Q4).  
+
+The purpose of this analysis is to summarize the main characteristics of the dataset and to identify which branches and regions show higher activity levels
+
+
+
+\vspace{1cm}
+
+## 1.1 Summary Table
+
+
+```{r , message=FALSE, warning=FALSE,echo=FALSE}
+
+
+library(dplyr)
+
+summary_table <- data %>%
+  group_by(Branch) %>%
+  summarise(
+    Count = n(),
+    Minimum = min(`Number of Services`, na.rm = TRUE),
+    Maximum = max(`Number of Services`, na.rm = TRUE),
+    Mean = mean(`Number of Services`, na.rm = TRUE),
+    Median = median(`Number of Services`, na.rm = TRUE),
+    SD = sd(`Number of Services`, na.rm = TRUE),
+    Variance = var(`Number of Services`, na.rm = TRUE)
+  )
+
+summary_table
+
+```
+
+
+
+
+\vspace{1cm}
+
+Table 1 presents the descriptive statistics for the number of services provided across customs branches in Saudi Arabia during 2024.  
+Each row corresponds to a branch, and the columns report the count (n), minimum, maximum, mean, median, standard deviation (SD), and variance of the quarterly service totals.
+
+The results indicate substantial variation in service activity across branches.  
+Major ports—such as Dammam King Abdulaziz Port and Al Batha Port—exhibit higher mean service counts, reflecting heavy operational loads and greater service utilization.  
+In contrast, smaller or region-specific branches (e.g., Arar, Al Baha, and Yanbu Airport) show lower average service volumes, consistent with their more limited throughput.
+
+Overall, these differences likely reflect variation in branch scale, capacity, and regional demand; taken together, the larger customs ports handle the majority of service operations across the Kingdom.  
+
+
+\vspace{2cm}
+
+
+
+# **Visualization of Regional Services and Visitors (2024)**
+
+This section presents a series of *pie charts* illustrating the *distribution of services and visitors across Saudi regions* from *Q1-2024 to Q4-2024*.  
+Each figure compares the relative share of service activity and visitor volume among the *Eastern, Western, Central, Southern, and Northern regions*.  
+The goal of this visualization is to highlight *regional differences in operational activity and customer engagement over time*.
+
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+
+plot_pie <- function(values, labels, title){
+  percent <- round(values / sum(values) * 100)
+  labs <- paste(labels, percent, "%")
+  par(mar = c(1, 1, 3, 1))
+  pie(values, labels = labs, main = title, cex = 1.0, )
+}
+
+# =====================  (Visitors) =====================
+
+par(mfrow = c(3, 2))
+
+plot_pie(c(39.58894, 55.4012, 22.8513, 86.09669, 33.20302),
+          c("South", "West", "Central", "East", "North"),
+          "Q1-2024 Visitors")
+
+plot_pie(c(40.91335518,54.40047118,27.197,86.829,32.95935049),
+          c("South", "West", "Central", "East", "North"),
+          "Q2-2024 Visitors")
+
+plot_pie(c(88.72461974,27.77778645,39.47369173,40.87432294,58.31776618),
+          c("East", "Central", "North", "South", "West"),
+          "Q3-2024 Visitors")
+
+plot_pie(c(40.37765,62.20097,27.4485173,86.20612,41.52164),
+          c("South", "West", "Central", "East", "North"),
+          "Q4-2024 Visitors")
+
+
+
+dev.copy(png, "Visitors_All.png", width=1600, height=1200)
+dev.off()
+```
+
+# Analytical Summary of the Visitors Pie Charts
+
+The pie charts illustrate how visitor distribution varied across the Eastern, Western, Central, Southern, and Northern regions from Q1-2024 to Q4-2024.
+
+Across all quarters, the Eastern region consistently holds the largest share of visitors, indicating the highest operational activity.  
+The Western region ranks second, showing stable engagement over time.
+
+In contrast, the Central, Southern, and Northern regions show moderate to lower shares, with only minor fluctuations between quarters.  
+These patterns suggest that visitor traffic is geographically concentrated, and that seasonal or quarterly changes have minimal impact on the overall distribution.
+
+Overall, the charts highlight strong regional differences, with the East and West clearly dominating visitor activity throughout the period.
+
+\vspace{1cm}
+
+```{r , echo=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+# ===================== ا (Services) =====================
+par(mfrow = c(3, 2))
+
+plot_pie(c(44.02757, 63.56799, 24.90558,105.1781,41.3967),
+          c("South", "West", "Central", "East", "North"),
+          "Q1-2024 Services")
+
+plot_pie(c(45.45086055,62.68957657,29.7741,106.521,40.05701747),
+          c("South", "West", "Central", "East", "North"),
+          "Q2-2024 Services")
+
+plot_pie(c(108.5220353,30.93753957,47.69404954,45.88994396,65.96535852),
+          c("East", "Central", "North", "South", "West"),
+          "Q3-2024 Services")
+
+plot_pie(c(45.62683,71.36153,30.57528356,105.4806,49.28117),
+          c("South", "West", "Central", "East", "North"),
+          "Q4-2024 Services")
+
+
+
+  
+dev.copy(png, "Services_All.png", width=1600, height=1200)
+dev.off()
+```
+
+## Analytical Summary of the Service Pie Charts
+
+The pie charts illustrate how service distribution changed across the Eastern, Western, Central, Southern, and Northern regions from Q1-2024 Q4-2024.
+
+Across all foquarters, the Eastern region consistently appears as the largest contributor, maintaining the highest share of service activity. The Western region follows with a stable and notable proportion throughout the period.
+
+In comparison, the Central, Southern, and Northern regions show relatively smaller shares with minor quarter-to-quarter variation. These patterns indicate that service operations are geographically concentrated, with limited seasonal or temporal shifts.
+
+Overall, the charts highlight strong regional differences, where the Eastern and Western regions dominate service activity over all observed quarters.
+
+\vspace{2cm}
+
+### Randomized Complete Block Design (RCBD)
+
+In this study, we used a *Randomized Complete Block Design (RCBD)* to analyze the effect of *Region* on the number of visitors and services, while *controlling for the time effect* using *Quarter* as a blocking factor.
+
+We assumed that:
+- *Region* represents the treatments (North, South, East, West, …).
+- *Quarter* (Q1–Q4) represents the blocks (time periods during 2024).
+- Within each quarter, all regions are observed, which satisfies the complete block condition.
+
+---
+
+#### Block Layout (Conceptual RCBD Table)
+
+The structure of the design can be represented as:
+
+| Block (Quarter) | Region 1 | Region 2 | Region 3 | Region 4 | ... |
+|-----------------|----------|----------|----------|----------|-----|
+| Q1              | \(Y_{11}\) | \(Y_{21}\) | \(Y_{31}\) | \(Y_{41}\) | ... |
+| Q2              | \(Y_{12}\) | \(Y_{22}\) | \(Y_{32}\) | \(Y_{42}\) | ... |
+| Q3              | \(Y_{13}\) | \(Y_{23}\) | \(Y_{33}\) | \(Y_{43}\) | ... |
+| Q4              | \(Y_{14}\) | \(Y_{24}\) | \(Y_{34}\) | \(Y_{44}\) | ... |
+
+
+Where \(Y_{ij}\) is the observed response (e.g. log-transformed visitors or services)  
+for *Region \(i\)* in *Quarter \(j\)*.
+
+---
+
+#### RCBD Model
+
+The statistical model for the randomized complete block design is:
+
+\[
+Y_{ij} = \mu + \tau_i + \beta_j + \varepsilon_{ij},
+\]
+
+where:
+
+- \(\mu\) : overall mean  
+- \(\tau_i\) : effect of the \(i\)-th region (treatment)  
+- \(\beta_j\) : effect of the \(j\)-th quarter (block)  
+- \(\varepsilon_{ij}\) : random error, assumed i.i.d. \(N(0,\sigma^2)\)
+
+for \(i = 1, \dots, t\) (number of regions) and \(j = 1, \dots, b\) (number of quarters).
+
+---
+
+#### Sums of Squares including Block Term
+
+Let:
+
+- \(\bar{Y}_{i.}\) = mean of region \(i\) over all quarters  
+- \(\bar{Y}_{.j}\) = mean of quarter \(j\) over all regions  
+- \(\bar{Y}_{..}\) = grand mean over all observations  
+
+Then the *total sum of squares* is:
+
+\[
+SS_{Total} = \sum_{i=1}^{t}\sum_{j=1}^{b}
+\left(Y_{ij} - \bar{Y}_{..}\right)^2
+\]
+
+The *treatment (Region) sum of squares*:
+
+\[
+SS_{Trt} = b \sum_{i=1}^{t}
+\left(\bar{Y}{i.} - \bar{Y}{..}\right)^2
+\]
+
+The *block (Quarter) sum of squares* that we use in the RCBD is:
+
+\[
+SS_{Block} = t \sum_{j=1}^{b}
+\left(\bar{Y}{.j} - \bar{Y}{..}\right)^2
+\]
+
+and the *error sum of squares* is obtained by:
+
+\[
+SS_{Error} = SS_{Total} - SS_{Trt} - SS_{Block}
+\]
+
+The corresponding *mean squares* and *F–statistics* are:
+
+\[
+MS_{Block} = \frac{SS_{Block}}{b-1}, \quad
+MS_{Error} = \frac{SS_{Error}}{(t-1)(b-1)}
+\]
+
+\[
+F_{Block} = \frac{MS_{Block}}{MS_{Error}}, \qquad
+F_{Trt} = \frac{MS_{Trt}}{MS_{Error}}
+\]
+
+In R, these quantities are computed implicitly by the aov() function using the model:
+
+\[
+\texttt{response} \sim \texttt{Region} + \texttt{Quarter}
+\]
+
+In this section, we evaluate the effects of Quarter (Block) and Region (Treatment) on the
+log-transformed numbers of visitors and services.  
+Following the standard RCBD procedure from the course lectures, we first test the block effect,
+and then we test the treatment effect.
+
+---
+
+## 1. Hypotheses for the Block Effect (Quarter)
+
+Null Hypothesis (H0):  
+There is no block effect on the response variable. All quarter means are equal.  
+\[
+H_0: \beta_1 = \beta_2 = \beta_3 = \beta_4
+\]
+
+Alternative Hypothesis (Ha):  
+At least one quarter has a different mean.  
+\[
+H_a:\ \text{At least one block mean differs}
+\]
+
+\vspace{1cm}
+
+## 2. Hypotheses for the Treatment Effect (Region)
+
+Null Hypothesis (H0):  
+There is no regional effect on the response variable. All region means are equal.  
+\[
+H_0: \tau_1 = \tau_2 = \tau_3 = \tau_4
+\]
+
+Alternative Hypothesis (Ha):  
+At least one region mean is different.  
+\[
+H_a:\ \text{At least one treatment mean differs}
+\]
+
+\vspace{5cm}
+```{r , echo=TRUE, message=FALSE, warning=FALSE, echo=TRUE}
+library(readxl)
+library(dplyr)
+library(car)
+
+df <- read_excel("StaticData.xlsx")
+df$Region  <- factor(df$Region)
+df$Quarter <- factor(df$Quarter, levels = c("Q1","Q2","Q3","Q4"))
+
+ 
+model_vis <- aov(log_Visitors ~ Region + Quarter, data = df)
+model_srv <- aov(log_Services ~ Region + Quarter, data = df)
+
+
+summary(model_vis)
+summary(model_srv)
+
+
+leveneTest(log_Visitors ~ Region, data = df)
+leveneTest(log_Services ~ Region, data = df)
+
+
+```
+vspace{6cm}
+
+
+
+
+# Hypothesis Testing Steps for log_Visitors.
+
+### Step 1: State the Hypotheses
+
+Block (Quarter):  
+- H0: Quarter has no effect on log_Visitors.  
+- Ha: At least one quarter mean is different.
+
+Treatment (Region):  
+- H0: Region has no effect on log_Visitors.  
+- Ha: At least one region mean is different.
+
+
+
+### Step 2: Fit the RCBD Model
+
+The fitted model in R:  
+\[
+\text{log\_Visitors} \sim \text{Region} + \text{Quarter}
+\]
+
+
+
+### Step 3: Check the ANOVA Results
+
+- Region p-value = 0.0048  
+- Quarter p-value = 0.8394
+
+
+
+### Step 4: Compare p-values with a = 0.05
+
+- Quarter: 0.8394 > 0.05  Fail to reject H0
+- Region: 0.0048 < 0.05  Reject H0
+
+
+
+### Step 5: Final Decision
+
+- Quarter: No significant block effect.  
+- Region: Significant treatment effect on log_Visitors.
+
+
+
+
+
+# Hypothesis Testing Steps for log_Services
+
+### Step 1: State the Hypotheses
+
+Block (Quarter):  
+- H0: Quarter has no effect on log_Services.  
+- Ha: At least one quarter mean is different.
+
+Treatment (Region):  
+- H0: Region has no effect on log_Services.  
+- Ha: At least one region mean is different.
+
+
+### Step 2: Fit the RCBD Model
+
+The fitted model in R:  
+\[
+\text{log\_Services} \sim \text{Region} + \text{Quarter}
+\]
+
+
+
+### Step 3: Check the ANOVA Results
+
+- Region p-value = 0.00376  
+- Quarter p-value = 0.84522
+
+
+
+### Step 4: Compare p-values with a = 0.05
+
+- Quarter: 0.84522 > 0.05 Fail to reject H0 
+- Region: 0.00376 < 0.05  Reject H0
+
+
+
+### Step 5: Final Decision
+
+- Quarter: No significant block effect.  
+- Region: Significant treatment effect on log_Services.
+
+\vspace{4cm}
+
+# Conclusion
+
+The RCBD analysis demonstrates that regional differences are the primary source of variation in both visitor and service activity across Saudi customs branches. The Region factor was statistically significant for both log_Visitors and log_Services (p < 0.05), indicating that operational performance varies meaningfully between regions. The Eastern and Western regions consistently exhibited the highest levels of activity, reflecting greater service demand, larger port capacity, and stronger operational throughput. In contrast, the Northern and Southern regions showed lower yet stable levels of activity throughout the year.
+
+Meanwhile, the Quarter factor—used as a block to control for time—was not significant in either model (p > 0.05). This result indicates that seasonal timing does not contribute to meaningful variation in services or visitors during 2024. Activity levels remained stable across Q1–Q4, suggesting that temporal changes do not influence operational performance.
+
+Overall, the findings confirm that geographical location, rather than seasonal timing, drives operational differences in Saudi customs branches. The statistical evidence highlights that regional characteristics, not quarter-to-quarter shifts, shape patterns of service delivery and visitor volume across the Kingdom.
+
+
+
+
+
